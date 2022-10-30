@@ -21,6 +21,7 @@ export const createEventListeners = ({
 	provider,
 	walletAddress,
 	setShowAlert,
+	setUpdateGameData,
 }) => {
 	const NewPlayerEventFilter = contract.filters.NewPlayer()
 
@@ -35,4 +36,41 @@ export const createEventListeners = ({
 			})
 		}
 	})
+
+const NewBattleEventFilter = contract.filters.NewBattle()
+
+	AddNewEvent(NewBattleEventFilter, provider, ({ args }) => {
+		console.log('New battle started', args, walletAddress)
+
+		if(walletAddress.toLowerCase()=== args.player1.toLowerCase() || walletAddress.toLowerCase()=== args.player2.toLowerCase()) {
+			navigate(`/battle/${args.battleName}`)
+		}
+
+		setUpdateGameData(prevUpdateGameDate => prevUpdateGameDate + 1)
+	})
+
+  const BattleMoveEventFilter = contract.filters.BattleMove()
+	AddNewEvent(BattleMoveEventFilter, provider, ({ args }) => {
+		console.log('Battle move initiated!', args)
+	})
+
+	const RoundEndedEventFilter = contract.filters.RoundEnded()
+	AddNewEvent(RoundEndedEventFilter, provider, ({ args }) => {
+		console.log('Round ended!', args, walletAddress)
+
+		for (let i = 0; i < args.damagedPlayers.length; i += 1) {
+			if (args.damagedPlayers[i] !== emptyAccount) {
+				if (args.damagedPlayers[i] === walletAddress) {
+					sparcle(getCoords(player1Ref))
+				} else if (args.damagedPlayers[i] !== walletAddress) {
+					sparcle(getCoords(player2Ref))
+				}
+			} else {
+				playAudio(defenseSound)
+			}
+		}
+
+		setUpdateGameData(prevUpdateGameData => prevUpdateGameData + 1)
+	})
+
 }
